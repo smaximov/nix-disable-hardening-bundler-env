@@ -2,14 +2,15 @@
 }:
 
 let
-  hardeningDisable = [ "format" ];
-
   gems = pkgs.bundlerEnv {
     name = "app-gems";
     gemdir = ./.;
 
-    # This doens't make any difference:
-    # inherit hardeningDisable;
+    gemConfig = pkgs.defaultGemConfig // {
+      digest-sha3 = attrs: {
+        hardeningDisable = [ "format" ];
+      };
+    };
   };
 in pkgs.mkShell {
   buildInputs = with pkgs; [
@@ -17,6 +18,4 @@ in pkgs.mkShell {
     gems
     bundix
   ];
-
-  inherit hardeningDisable;
 }

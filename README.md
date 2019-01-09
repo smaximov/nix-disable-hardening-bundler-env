@@ -1,3 +1,9 @@
+This is the companion repository for [the forum post][forum post].
+
+[forum post]: https://discourse.nixos.org/t/hardeningdisable-and-bundlerenv/1765
+
+# Steps to reproduce
+
 Bootstrap `gemset.nix`:
 
 ``` bash
@@ -59,3 +65,33 @@ builder for '/nix/store/a9bj2ra8gxfjs81s677l5w4zlra9vxck-ruby2.5.3-digest-sha3-1
 cannot build derivation '/nix/store/swzh9vxf58hn5n46i25kd8lbw1ih491k-app-gems.drv': 1 dependencies couldn't be built
 error: build of '/nix/store/swzh9vxf58hn5n46i25kd8lbw1ih491k-app-gems.drv' failed
 ```
+
+# Solution
+
+Check out [this post][solution] by @zimbatm. Basically, we need to override default gem config for `bundlerEnv`:
+
+``` nix
+{ pkgs ? import <nixpkgs> {}
+}:
+
+let
+  gems = pkgs.bundlerEnv {
+    name = "app-gems";
+    gemdir = ./.;
+    gemConfig = pkgs.defaultGemConfig // {
+      digest-sha3 = attrs: {
+        hardeningDisable = [ "format" ];
+      };
+    };
+  };
+
+in pkgs.mkShell {
+  buildInputs = with pkgs; [
+    ruby
+    gems
+    bundix
+  ];
+}
+```
+
+[solution]: https://discourse.nixos.org/t/hardeningdisable-and-bundlerenv/1765/2?u=smaximov
